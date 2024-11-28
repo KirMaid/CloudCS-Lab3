@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: container-my-server
-          image: smirnoff410/cloudcs-lab2:server
+          image: ialavash/cloud-cs:inference-service
           ports:
             - containerPort: 8000
 

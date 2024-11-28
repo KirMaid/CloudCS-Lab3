@@ -5,10 +5,10 @@ metadata:
   labels:
     env: test
     app: server
-    owner: VladSmirnov
+    owner: KirillMaidannikov
 spec:
   containers:
     - name: container-server
-      image: smirnoff410/cloudcs-lab2:server
+      image: ialavash/cloud-cs:inference-service
       ports:
         - containerPort: 8000

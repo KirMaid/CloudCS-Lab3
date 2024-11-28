@@ -4,7 +4,7 @@ metadata:
   name: my-service
   labels:
     env: prod
-    owner: VladSmirnov
+    owner: KirillMaidannikov
 spec:
   selector:
     app: my-server #Link to deployment
