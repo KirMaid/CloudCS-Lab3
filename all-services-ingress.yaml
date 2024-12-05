@@ -21,29 +21,29 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres-deployment
-spec: # Начало спецификации деплоймента
-  replicas: 1 # Количество запускаемых реплик
+spec:
+  replicas: 1
   selector:
     matchLabels:
       app: postgres
-  template: # Селектор для выбора запускаемого пода
+  template:
     metadata:
       labels:
         app: postgres
-    spec: # Конфигурация пода
+    spec:
       containers:
       - name: postgres
         image: postgres:15.2
         env:
-        - name: POSTGRES_PASSWORD # Задаём переменные среды через secret
+        - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: postgres-credentials
               key: db_password
-        volumeMounts: # Указываем место монтирования тома
-        - mountPath: postgresql/data
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
           name: pgdata
-      volumes: # Указываем конфигурацию монтирования тома
+      volumes:
       - name: pgdata
         persistentVolumeClaim:
           claimName: postgres-pvc
@@ -53,18 +53,18 @@ kind: Service
 metadata:
   name: postgres
 spec:
-  type: ClusterIP # Под доступен только внутри кластера
-  ports: # Настраиваем внешний порт, доступный для остальных сервисов и ему соответствующий внутренний
+  type: ClusterIP
+  ports:
   - port: 5432
     targetPort: 5432
   selector:
-    app: postgres # Указываем метку пода
+    app: postgres
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: keycloak-credentials
-type: Opaque # Cодержимое секрета является произвольными данными, поэтому такой тип
+type: Opaque
 data:
   keycloak_admin_password: YWRtaW4wMDc=
 ---
@@ -104,7 +104,7 @@ spec:
                 secretKeyRef:
                   name: keycloak-credentials
                   key: keycloak_admin_password
-          args: [ "start" ] # Аргументы запуска контейнера
+          args: [ "start" ]
           ports:
             - containerPort: 8443
 ---
@@ -113,7 +113,7 @@ kind: Service
 metadata:
   name: keycloak
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - port: 8443
     targetPort: 8443
@@ -127,6 +127,7 @@ metadata:
 type: Opaque
 data:
   client_secret: M3pGbmg3MUFrWlBDUkR3S0x6VmpCektRcDh2R0lxdHA=
+#  aQM215R1uLaCrUbZorFw3rxPs65qcegk закодировать
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -165,7 +166,7 @@ kind: Service
 metadata:
   name: inference
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - port: 8888
     targetPort: 8000
@@ -187,15 +188,52 @@ spec:
     - type: Resource
       resource:
         name: cpu
-        target:
+        target: 
           type: Utilization
           averageUtilization: 70
     - type: Resource
       resource:
         name: memory
-        target:
+        target: 
           type: Utilization
           averageUtilization: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - keycloak.local
+        - inference.local
+      secretName: keycloak-tls-secret
+  rules:
+    - host: keycloak.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8443
+    - host: inference.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: inference
+                port:
+                  number: 8888
+
 
 
 
