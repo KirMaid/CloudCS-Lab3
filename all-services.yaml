@@ -147,7 +147,7 @@ spec:
           image: ialavash/cloud-cs:inference-service
           env:
             - name: MODEL_PATH
-              value: "/models/pipeline.pkl"
+              value: "models/pipeline.pkl"
             - name: KEYCLOAK_URL
               value: "https://keycloak:8443"
             - name: CLIENT_ID
